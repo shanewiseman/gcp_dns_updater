@@ -1,5 +1,4 @@
 import libcloud
-import requests
 import json
 import logging
 
@@ -8,11 +7,7 @@ from libcloud.dns.drivers.google import GoogleDNSDriver
 from libcloud.dns.types import RecordType
 from config import Config
 
-logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
-
-class GCPDNSUpdaterException(Exception):
-    pass
 
 class GCPDNSUpdaterTest:
     def __init__(self, zone_fqdn, google_auth_json_file):
@@ -239,7 +234,9 @@ class GCPDNSUpdater:
 
     def eligble_for_update(self,record, rr):
         #TODO need to check if IPs are the same
-        log.debug("{} -- {}".format(record.ttl,rr.ttl))
-        if str(record.ttl) == str(rr.ttl) and True:
+	log.info(record)
+        if str(record.ttl) == str(rr.ttl) and str(record.data["rrdatas"][0]) == str(rr.ip):
+	    log.info("Not Eligible For Update")
             return False
+	log.info("Eligible For Update")
         return True
