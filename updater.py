@@ -201,6 +201,8 @@ class GCPDNSUpdater:
             zone_fqdn (string) root domain name of zone (ie zone.com)
             google_auth_json_file (string path) relative path for google_auth construct
 
+        """
+
         log.debug("Zone: {} Authfile: {}".format(zone_fqdn, google_auth_json_file))
         self.google_auth = self.parse_auth_file(google_auth_json_file)
         self.dns_driver = self.create_driver(google_auth_json_file)
@@ -351,6 +353,11 @@ class GCPDNSUpdater:
     def retrieve_record(self, hostname):
         """
         retrives record existing in GCP (Requires FQDN)
+
+        (Args):
+            hostname (string) fqdn hostname for record (ie wwww.zone.com)
+
+        """
 
         log.info("Retrieving Record")
         for record in self.dns_driver.iterate_records(self.zone):
