@@ -1,5 +1,4 @@
 import libcloud
-import requests
 import json
 import logging
 
@@ -8,10 +7,18 @@ from libcloud.dns.drivers.google import GoogleDNSDriver
 from libcloud.dns.types import RecordType
 from config import Config
 
-logging.basicConfig(level=logging.WARNING)
+class GCPDNSUpdaterTest:
+    """
+
+    Class containing all unit tests for existing logic. Addition logic in GCPDNSUpdater
+    class should be associated with a new test here
+
+    """
+
 log = logging.getLogger(__name__)
 
 class GCPDNSUpdaterTest:
+
     """
 
     Class containing all unit tests for existing logic. Addition logic in GCPDNSUpdater
@@ -193,9 +200,6 @@ class GCPDNSUpdater:
         (Args):
             zone_fqdn (string) root domain name of zone (ie zone.com)
             google_auth_json_file (string path) relative path for google_auth construct
-                (ie config/google_auth.file)(https://cloud.google.com/compute/docs/access/service-accounts)
-
-        """
 
         log.debug("Zone: {} Authfile: {}".format(zone_fqdn, google_auth_json_file))
         self.google_auth = self.parse_auth_file(google_auth_json_file)
@@ -348,13 +352,6 @@ class GCPDNSUpdater:
         """
         retrives record existing in GCP (Requires FQDN)
 
-        (Args):
-            hostname (string) base hostname for record (ie wwww.zone.com)
-
-        (throws)
-            raises GCPDNSUpdaterException if record does NOT exist on GCP
-
-        """
         log.info("Retrieving Record")
         for record in self.dns_driver.iterate_records(self.zone):
             if record.type != RecordType.A:
@@ -368,7 +365,8 @@ class GCPDNSUpdater:
         raise GCPDNSUpdaterException("Record Not Found: {}".format(hostname))
 
 
-    def __eligible_for_update(self,record, rr):
+    def eligble_for_update(self,record, rr):
+
         """
         Checks if record matches the Request Record
 
@@ -377,8 +375,9 @@ class GCPDNSUpdater:
             RequestRecord()
         """
 
-        #TODO need to check if IPs are the same
-        log.debug("{} -- {}".format(record.ttl,rr.ttl))
-        if str(record.ttl) == str(rr.ttl) and True:
+	log.info(record)
+        if str(record.ttl) == str(rr.ttl) and str(record.data["rrdatas"][0]) == str(rr.ip):
+	    log.info("Not Eligible For Update")
             return False
+	log.info("Eligible For Update")
         return True
