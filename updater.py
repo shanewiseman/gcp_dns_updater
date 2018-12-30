@@ -11,10 +11,14 @@ from config import Config
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
 
-class GCPDNSUpdaterException(Exception):
-    pass
-
 class GCPDNSUpdaterTest:
+    """
+
+    Class containing all unit tests for existing logic. Addition logic in GCPDNSUpdater
+    class should be associated with a new test here
+
+    """
+
     def __init__(self, zone_fqdn, google_auth_json_file):
         self.fqdn = zone_fqdn
         self.google_auth_json_file = google_auth_json_file
@@ -33,11 +37,13 @@ class GCPDNSUpdaterTest:
 
         log.warning("All Tests Passed")
 
+
     def test_create_object(self):
         log.warning("test_create_object")
         a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
 
         return True
+
 
     def test_format_record_name(self):
         log.warning("test_format_record_name")
@@ -53,12 +59,14 @@ class GCPDNSUpdaterTest:
 
         return True
 
+
     def test_create_delete_record(self):
         log.warning("test_create_delete_record")
         a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
         a.create_record(rr)
         a.delete_record(rr)
+
 
     def test_create_existing_record(self):
         log.warning("test_create_existing_record")
@@ -73,6 +81,7 @@ class GCPDNSUpdaterTest:
             return True
 
         raise Exception()
+
 
     def test_delete_nonexist_record(self):
         log.warning("test_delete_nonexist_record")
@@ -97,6 +106,7 @@ class GCPDNSUpdaterTest:
         a.delete_record(rr)
         return True
 
+
     def test_update_same_record(self):
         log.warning("test_update_same_record")
         a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
@@ -109,6 +119,7 @@ class GCPDNSUpdaterTest:
             return True
 
         raise Exception()
+
 
     def test_update_nonexist_record(self):
         log.warning("test_update_nonexist_record")
@@ -128,10 +139,28 @@ class GCPDNSUpdaterTest:
 
 
 class GCPDNSUpdaterException(Exception):
+    """
+    Exception class for handling logic alerts from the main GCPDNSUpdater Class
+
+    Examples of such instance is attempting to update a non existent entry,
+    or updating an entry with the same rdata
+
+    """
     pass
 
 
 class RequestRecord:
+    """
+
+    Object used by GCPDNSUpdater for all record mutations, contains record information
+
+    Args:
+        ip (string) Ip address of hostname record
+        hostname (string) dns hostname for record
+        ttl (string)(optional) TimeToLive attribue for record
+
+    """
+
     def __init__(self, ip, hostname, ttl=None):
         self.ip = ip
         self.hostname = hostname
@@ -139,8 +168,35 @@ class RequestRecord:
 
 
 class GCPDNSUpdater:
+    """
+    Class for the creation, deletion, and mutation of records in the GCP DNS envirnment
+
+    All mutable calls require an instance of RequestRecord
+
+    (Throws) GCPDNSUpdaterException(Exception)
+
+    """
+    """
+    TODO:
+        1) need to check to see if the class variable (zone) is updated at the same time
+            or do we need to re_initize internal zone object.
+            Currently, we don't make use of long lived zone objects, but I can see how this
+            be benficial to track
+
+    """
+
 
     def __init__(self, zone_fqdn, google_auth_json_file):
+        """
+        Class Constructor
+
+        (Args):
+            zone_fqdn (string) root domain name of zone (ie zone.com)
+            google_auth_json_file (string path) relative path for google_auth construct
+                (ie config/google_auth.file)(https://cloud.google.com/compute/docs/access/service-accounts)
+
+        """
+
         log.debug("Zone: {} Authfile: {}".format(zone_fqdn, google_auth_json_file))
         self.google_auth = self.parse_auth_file(google_auth_json_file)
         self.dns_driver = self.create_driver(google_auth_json_file)
@@ -148,12 +204,28 @@ class GCPDNSUpdater:
 
 
     def parse_auth_file(self, auth_file):
+        """
+        Returns structured object from file containing JSON
+
+        (Args):
+            auth_file (string path) relative path for google_auth construct
+                (ie config/google_auth.file)(https://cloud.google.com/compute/docs/access/service-accounts)
+
+        """
 
         with open(auth_file) as f:
             return json.load(f)
 
 
     def create_driver(self, auth_file):
+        """
+        Generates driver class which interacts with GCP Directly
+
+        (Args):
+            auth_file (string path) relative path for google_auth construct
+                (ie config/google_auth.file)(https://cloud.google.com/compute/docs/access/service-accounts)
+
+        """
         log.info("Creating Driver")
         return GoogleDNSDriver(
                 self.google_auth['client_email'],
@@ -162,6 +234,17 @@ class GCPDNSUpdater:
 
 
     def retrieve_zone(self, zone_fqdn):
+        """
+        Retrives Zone object from driver based upon zone matching passed fqdn
+
+        (Args):
+            zone_fqdn (string) root domain name of zone (ie zone.com)
+
+        (throws)
+            raises GCPDNSUpdaterException if zone is not matched
+
+        """
+
         log.info("Retrieving Zone")
         for zone in self.dns_driver.iterate_zones():
             if zone_fqdn == zone.domain:
@@ -172,6 +255,16 @@ class GCPDNSUpdater:
         raise GCPDNSUpdaterException("Zone Not Found: {}".format(zone_fqdn))
 
     def create_record(self, rr):
+        """
+        creates and commits record to zone
+
+        (Args):
+            RequestRecord()
+
+        (throws)
+            raises GCPDNSUpdaterException if record already exists on GCP
+
+        """
         log.info("Creating Record")
         fqdn = self.format_record_name(rr.hostname)
 
@@ -188,6 +281,16 @@ class GCPDNSUpdater:
 
 
     def delete_record(self, rr):
+        """
+        deletes record existing in GCP
+
+        (Args):
+            RequestRecord()
+
+        (throws)
+            raises GCPDNSUpdaterException if record does NOT exist on GCP
+
+        """
         log.info("Deleting Record")
         fqdn = self.format_record_name(rr.hostname)
         record = None
@@ -199,6 +302,17 @@ class GCPDNSUpdater:
         return self.dns_driver.delete_record(record)
 
     def update_record(self, rr):
+        """
+        updates record existing in GCP
+
+        (Args):
+            RequestRecord()
+
+        (throws)
+            raises GCPDNSUpdaterException if record does NOT exist on GCP
+            raises GCPDNSUpdaterException if record in GCP is identical to update
+
+        """
         log.info("Updating Record")
 
         fqdn = self.format_record_name(rr.hostname)
@@ -206,8 +320,8 @@ class GCPDNSUpdater:
 
         record = self.retrieve_record(fqdn)
 
-        if self.eligble_for_update(record, rr):
-            #TODO need to check to see if the class variable (zone) is updated at the same time
+        if self.eligible_for_update(record, rr):
+
             log.info("Performing Update")
             self.delete_record(rr)
             return self.create_record(rr)
@@ -216,7 +330,14 @@ class GCPDNSUpdater:
         raise GCPDNSUpdaterException("Record Matches Existing, Can't Update")
 
     def format_record_name(self, hostname):
-        #NOTE base domain name case or user provides fqdn
+        """
+        Formats record as required for driver usage
+
+        (Args):
+            hostname (string) base hostname for record (ie wwww)
+
+        """
+        #NOTE in case user provides provides fqdn or we're mutating the base zone hostname
         if hostname[-1] == ".":
             return hostname
 
@@ -224,6 +345,16 @@ class GCPDNSUpdater:
 
 
     def retrieve_record(self, hostname):
+        """
+        retrives record existing in GCP (Requires FQDN)
+
+        (Args):
+            hostname (string) base hostname for record (ie wwww.zone.com)
+
+        (throws)
+            raises GCPDNSUpdaterException if record does NOT exist on GCP
+
+        """
         log.info("Retrieving Record")
         for record in self.dns_driver.iterate_records(self.zone):
             if record.type != RecordType.A:
@@ -237,7 +368,15 @@ class GCPDNSUpdater:
         raise GCPDNSUpdaterException("Record Not Found: {}".format(hostname))
 
 
-    def eligble_for_update(self,record, rr):
+    def __eligible_for_update(self,record, rr):
+        """
+        Checks if record matches the Request Record
+
+        (Args):
+            GoogleDNSDriver:Record()
+            RequestRecord()
+        """
+
         #TODO need to check if IPs are the same
         log.debug("{} -- {}".format(record.ttl,rr.ttl))
         if str(record.ttl) == str(rr.ttl) and True:
