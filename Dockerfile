@@ -1,7 +1,5 @@
 FROM ubuntu:xenial
 
-
-
 WORKDIR /root/
 COPY apt-requirements.txt /root/
 RUN apt update; apt upgrade -y;
@@ -14,6 +12,7 @@ COPY GCPDNSUpdater/ /root/google-dns-updater/GCPDNSUpdater/
 ENV PYTHONPATH=/root/google-dns-updater/
 
 WORKDIR /root/google-dns-updater/
+
 ARG GOOGLE_AUTH
 COPY ${GOOGLE_AUTH} GCPDNSUpdater/config/google.json
 

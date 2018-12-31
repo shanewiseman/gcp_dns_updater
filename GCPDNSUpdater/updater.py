@@ -5,13 +5,14 @@ import logging
 from libcloud.common.types import LibcloudError
 from libcloud.dns.drivers.google import GoogleDNSDriver
 from libcloud.dns.types import RecordType
-from config import Config
+from .config import Config
+from .exception import GCPDNSUpdaterException
 
 
 log = logging.getLogger(__name__)
 
 
-class GCPDNSUpdater:
+class Updater:
     """
     Class for the creation, deletion, and mutation of records in the GCP DNS envirnment
 
@@ -209,7 +210,7 @@ class GCPDNSUpdater:
         raise GCPDNSUpdaterException("Record Not Found: {}".format(hostname))
 
 
-    def eligble_for_update(self,record, rr):
+    def eligible_for_update(self,record, rr):
 
         """
         Checks if record matches the Request Record
@@ -219,9 +220,9 @@ class GCPDNSUpdater:
             RequestRecord()
         """
 
-	log.info(record)
+        log.info(record)
         if str(record.ttl) == str(rr.ttl) and str(record.data["rrdatas"][0]) == str(rr.ip):
-	    log.info("Not Eligible For Update")
+            log.info("Not Eligible For Update")
             return False
-	log.info("Eligible For Update")
+        log.info("Eligible For Update")
         return True

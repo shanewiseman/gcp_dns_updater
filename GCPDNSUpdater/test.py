@@ -5,8 +5,11 @@ import logging
 from libcloud.common.types import LibcloudError
 from libcloud.dns.drivers.google import GoogleDNSDriver
 from libcloud.dns.types import RecordType
-from config import Config
 
+from .config import Config
+from .updater import Updater
+from .request_record import RequestRecord
+from .exception import GCPDNSUpdaterException
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ class GCPDNSUpdaterTest:
 
     def test_create_object(self):
         log.warning("test_create_object")
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
 
         return True
 
@@ -52,7 +55,7 @@ class GCPDNSUpdaterTest:
                 ("a.b.c", "a.b.c.{}".format(self.fqdn)),
                 ("a.b.c.", "a.b.c.")]
 
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         for i in permutations:
             if a.format_record_name(i[0]) != i[1]:
                 raise Exception()
@@ -62,7 +65,7 @@ class GCPDNSUpdaterTest:
 
     def test_create_delete_record(self):
         log.warning("test_create_delete_record")
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
         a.create_record(rr)
         a.delete_record(rr)
@@ -70,7 +73,7 @@ class GCPDNSUpdaterTest:
 
     def test_create_existing_record(self):
         log.warning("test_create_existing_record")
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
         a.create_record(rr)
 
@@ -85,7 +88,7 @@ class GCPDNSUpdaterTest:
 
     def test_delete_nonexist_record(self):
         log.warning("test_delete_nonexist_record")
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
 
         try:
@@ -98,7 +101,7 @@ class GCPDNSUpdaterTest:
 
     def test_update_record(self):
         log.warning("test_update_record")
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
         a.create_record(rr)
         rr = RequestRecord(ip="1.1.1.2",hostname="test", ttl=10)
@@ -109,7 +112,7 @@ class GCPDNSUpdaterTest:
 
     def test_update_same_record(self):
         log.warning("test_update_same_record")
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
         a.create_record(rr)
         try:
@@ -124,7 +127,7 @@ class GCPDNSUpdaterTest:
     def test_update_nonexist_record(self):
         log.warning("test_update_nonexist_record")
 
-        a = GCPDNSUpdater(self.fqdn, self.google_auth_json_file)
+        a = Updater(self.fqdn, self.google_auth_json_file)
         rr = RequestRecord(ip="1.1.1.1",hostname="test")
         try:
             a.update_record(rr)

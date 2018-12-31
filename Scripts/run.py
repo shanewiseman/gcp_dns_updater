@@ -1,8 +1,7 @@
 import requests
 import logging
 
-from GCPDNSUpdater import GCPDNSUpdater, RequestRecord, GCPDNSUpdaterException
-from config import Config
+from GCPDNSUpdater import Updater, RequestRecord, GCPDNSUpdaterException, Config
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ def generate_request_record(ip):
     return RequestRecord(ip, Config.HOSTNAME, Config.TTL)
 
 def update_record(rr):
-    updater = GCPDNSUpdater(Config.ZONE, "config/google.json")
+    updater = Updater(Config.ZONE, "config/google.json")
 
     try:
         updater.update_record(rr)
