@@ -25,7 +25,7 @@ def generate_request_record(ip):
     return RequestRecord(ip, Config.HOSTNAME, Config.TTL)
 
 def update_record(rr):
-    updater = Updater(Config.ZONE, "config/google.json")
+    updater = Updater(Config.ZONE, "../GCPDNSUpdater/config/google.json")
 
     try:
         updater.update_record(rr)
