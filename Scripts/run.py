@@ -1,6 +1,7 @@
 import requests
 import logging
 import time
+import socket
 
 from GCPDNSUpdater import Updater, RequestRecord, GCPDNSUpdaterException, Config
 
@@ -12,11 +13,17 @@ def main():
     old_ip = None
 
     while True:
+        valid_ip = False
         found_ip = check_ip()
 
         log.info("Found IP: {}".format(found_ip))
+        try:
+            socket.inet_aton(found_ip)
+            valid_ip = True
+        except socket.error:
+            log.error("Invalid IP Found")
 
-        if found_ip != old_ip:
+        if valid_ip and found_ip != old_ip:
             log.warn("=====================================================")
 
             rr = generate_request_record(found_ip)
