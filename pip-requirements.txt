@@ -1,3 +1,4 @@
 pycrypto
 apache-libcloud
 requests
+cryptography
